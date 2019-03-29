@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><templates><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.comment" deleted="false" description="author name" enabled="true" id="org.eclipse.cdt.ui.text.templates.comment.author" name="author">author ${user}</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="catch block" enabled="true" id="org.eclipse.cdt.ui.text.templates.cpp.catch" name="catch">catch (${Exception} e) {
+	${cursor}
+}</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="" enabled="true" name="cdevice">T* devciePointer_hd;
+checkCudaErrors(cudaMalloc((void **)(&amp;${devicePointer_hd}[i]),pitch_N*sizeof(${devicePointer_hd}[0][0])));</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="allocat T** hdpoint  on  T* onhost  and  T** ondevce" enabled="true" name="chd">//--------------chd#start------------------
+int size_N=1;
+int pitch_N=1;
+T **${hostPointer_hd}=(T **)malloc(size_N*sizeof(${hostPointer_hd}[0]));
+for (int i= 0;i&lt;size_N;i++) {
+	checkCudaErrors(cudaMalloc((void **)(&amp;${hostPointer_hd}[i]),pitch_N*sizeof(${hostPointer_hd}[0][0])));
+}
+//--------------chd#end------------------
+
+</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="" enabled="true" name="chh">//---------------chh_start-------
+//allocate T** hostpoint on host
+int size_N=1;
+int pitch_N=1;
+T **${hostPointer_hh_N}=(T **)malloc(size_N*sizeof(${hostPointer_hh_N}[0]));
+for (int i= 0;i&lt;size_N;i++) {
+	${hostPointer_hh_N}[i]=(T* )malloc(pitch_N*sizeof(${hostPointer_hh_N}[0][0]));
+	for (int j=0;j&lt;pitch_N;j++) {
+		// assign value to hostPointer_hh_N[i][j]
+		hostPointer_hh_N[i][j]=0;
+	}  
+}
+//----------------chh_end----------------------
+</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="" enabled="true" name="chost">T* ${hostPointer_hd}=(T*)malloc(size_N*sizeof(${hostPointer_hd}[0]));</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="class declaration" enabled="true" id="org.eclipse.cdt.ui.text.templates.cpp.class" name="class">class ${name} {
+public:
+	${cursor}
+
+private:
+};</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="default multiline comment" enabled="true" id="org.eclipse.cdt.ui.text.templates.c.comment" name="comment">
+/*
+ * author ${user}
+ *
+ * To change this generated comment edit the template variable "comment":
+ * Window &gt; Preferences &gt; C/C++ &gt; Editor &gt; Templates.
+ */
+</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="" enabled="true" name="cout">cout&lt;&lt;"-----------------------------------------------"&lt;&lt;endl;</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="cusparseCreateMatDescr" enabled="true" name="creatematdescr">cusparseStatus_t erres;
+cusparseMatDescr_t debsrC;
+erres=cusparseCreateMatDescr(&amp;debsrC);
+if(erres==CUSPARSE_STATUS_SUCCESS)
+cout&lt;&lt;"debsrC of "&lt;&lt;"cusparsematdescr created success!"&lt;&lt;endl;</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="Handling for CUDA errors" enabled="true" id="com.nvidia.cuda.ide.build.cudaerror" name="cuError">if (${cudaError} != cudaSuccess) {
+	fprintf(stderr, "%s in %s at line %d\n", cudaGetErrorString(${cudaError}), __FILE__, __LINE__);
+	exit(1);
+}</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="do while statement" enabled="true" id="org.eclipse.cdt.ui.text.templates.c.do" name="do">do {
+	${line_selection}${cursor}
+} while (${condition});</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="else block" enabled="true" id="org.eclipse.cdt.ui.text.templates.c.else" name="else">else {
+	${cursor}
+}</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="else if block" enabled="true" id="org.eclipse.cdt.ui.text.templates.c.elseif" name="elseif">else if (${condition}) {
+	${cursor}
+}</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="for loop" enabled="true" id="org.eclipse.cdt.ui.text.templates.c.for" name="for">for (int ${i}=0;i&lt;${max};++${i}) {
+	${line_selection}${cursor}
+}</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="for loop with temporary variable" enabled="true" id="org.eclipse.cdt.ui.text.templates.cpp.for" name="for">for (int ${var} = 0; ${var} &lt; ${max}; ++${var}) {
+	${line_selection}${cursor}
+}</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="" enabled="true" name="for2">for (int ${i}=0;i&lt;${max};++${i}) {
+	for (int ${j}=0;j&lt;${max};++${j}) {
+		cout&lt;&lt;"row:="&lt;&lt;i&lt;&lt;"|colomn:="&lt;&lt;j&lt;&lt;"|vlaue:="&lt;&lt;value[i][j]&lt;&lt;endl;
+	}
+}</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="" enabled="true" name="for3">for (int ${pitch}=0;pitch&lt;${max};++${pitch}) {
+	for (int ${i}=0;i&lt;${max};++${i}) {
+	    for (int ${j}=0;j&lt;${max};++${j}) {
+		     cout&lt;&lt;"pitch:="&lt;&lt;pitch&lt;&lt;"|row:="&lt;&lt;i&lt;&lt;"|colomn:="&lt;&lt;j&lt;&lt;"|vlaue:="&lt;&lt;value[i][j]&lt;&lt;endl;
+	    }
+	}
+}</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="if statement" enabled="true" id="org.eclipse.cdt.ui.text.templates.c.if" name="if">if (${condition}) {
+	${line_selection}${cursor}
+}</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="if else statement" enabled="true" id="org.eclipse.cdt.ui.text.templates.c.ifelse" name="ifelse">if (${condition}) {
+	${cursor}
+} else {
+	
+}</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="main method" enabled="true" id="org.eclipse.cdt.ui.text.templates.c.main" name="main">int main(int argc, char **argv) {
+	${cursor}
+}
+</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="namespace declaration" enabled="true" id="org.eclipse.cdt.ui.text.templates.cpp.namespace" name="namespace">namespace ${name} {
+
+${cursor}
+
+}  // namespace ${name}</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="create new object" enabled="true" id="org.eclipse.cdt.ui.text.templates.cpp.new" name="new">${type} ${name} = new ${type}(${arguments});</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="print to standard error" enabled="true" id="org.eclipse.cdt.ui.text.templates.c.fprintf" name="stderr">fprintf(stderr, ${cursor});</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="print to standard output" enabled="true" id="org.eclipse.cdt.ui.text.templates.c.printf" name="stdout">printf(${cursor});</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="template_ struct" enabled="true" name="stemplate">template &lt;typename T_ELEM&gt; struct cuda_e{
+	
+}</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="switch case statement" enabled="true" id="org.eclipse.cdt.ui.text.templates.c.switch" name="switch">switch (${key}) {
+	case ${value}:
+		${cursor}
+		break;
+	default:
+		break;
+}</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="create dd and  to dd" enabled="true" name="todd">//-----------------todd_start----------------------------
+//allocate T** hostpoint_hh_N on host an assign value
+int size_N=100;
+int pitch_N=1;
+int **${hostPointer_hh_N}=(int **)malloc(size_N*sizeof(${hostPointer_hh_N}[0]));
+for (int i= 0;i&lt;size_N;i++) {
+	${hostPointer_hh_N}[i]=(int **)malloc(pitch_N*sizeof(${hostPointer_hh_N}[0][0]));
+	      // assign value to hostPointer[i][j]
+	for (int j=0;j&lt;pitch_N;j++) {
+		 //assign some value
+		${hostPointer_hh_N}[i][j]=0;;
+	}  
+}
+
+//todd shoud be used frist from the template todd
+//hostPointer_N be created by to hh and  make some value to hh
+int **${hostPointer_hd}=(int **)malloc(size_N*sizeof(${hostPointer_hd}[0]));
+for (int i= 0;i&lt;size_N;i++) {
+	checkCudaErrors(cudaMalloc((void **)(&amp;${hostPointer_hd}[i]),pitch_N*sizeof(${hostPointer_hd}[0][0])));
+	checkCudaErrors(cudaMemcpy(&amp;${hostPointer_hd}[i], ${hostPointer_hh_N}[i],pitch_N*sizeof(${hostPointer_hh_N}[0][0]), cudaMemcpyHostToDevice));
+}
+
+int **${devicePointer_dd};
+checkCudaErrors(cudaMalloc((int **)(&amp;${devicePointer_dd}),size_N*sizeof(${devicePointer_dd}[0])));
+checkCudaErrors(cudaMemcpy(${devicePointer_dd}, ${hostPointer_hd},size_N*sizeof(${devicePointer_dd}[0]), cudaMemcpyHostToDevice));
+//-----------------todd_end----------------------------------
+</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="no create device point" enabled="true" name="todevice">checkCudaErrors(cudaMemcpy(${devicePointer}, ${hostPointer},sizeof(${devicePointer}[0]), cudaMemcpyHostToDevice));
+</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="Allocate device array and copy source data" enabled="true" id="com.nvidia.cuda.ide.build.toDevice" name="toDevice">void *${devicePointer};
+checkCudaErrors(cudaMalloc(&amp;${devicePointer}, sizeof(${devicePointer}[0])));
+checkCudaErrors(cudaMemcpy(${devicePointer}, ${hostPointer},sizeof(${devicePointer}[0]), cudaMemcpyHostToDevice));
+</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="no creat host point" enabled="true" name="tohost">checkCudaErrors(cudaMemcpy(${hostPointer},${devicePointer},sizeof(${hostPointer}[0]),cudaMemcpyDeviceToHost));
+</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="" enabled="true" name="toHost">void *${hostPointer}=(void **)malloc(sizeof(${hostPointer}[0]));
+checkCudaErrors(cudaMemcpy(${hostPointer},${devicePointer},sizeof(${hostPointer}[0]),cudaMemcpyDeviceToHost));
+</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="try catch block" enabled="true" id="org.eclipse.cdt.ui.text.templates.cpp.try" name="try">try {
+	${line_selection}${cursor}
+} catch (${Exception} e) {
+}</template><template autoinsert="true" context="org.eclipse.cdt.ui.text.templates.c" deleted="false" description="using a namespace" enabled="true" id="org.eclipse.cdt.ui.text.templates.cpp.using" name="using">using namespace ${name};
+</template></templates>
