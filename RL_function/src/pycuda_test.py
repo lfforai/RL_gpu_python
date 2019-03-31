@@ -4,7 +4,7 @@ import numpy as np
 
 
 def init_sparsemat(p2p_file="/lf_tool/matrix_cuda/coo",value_file="/lf_tool/matrix_cuda/coo2",rownum=13):
-    so=ctypes.cdll.LoadLibrary('/root/cuda-workspace/RL_function/Debug/libRL_function.so')
+    so=ctypes.cdll.LoadLibrary('/root/git/RL_function/RL_function/Debug/libRL_function.so')
 
     # 返回稀疏矩阵nzz
     nnz=np.zeros(1,dtype=int)
@@ -71,14 +71,14 @@ class mat_sparse:
             return 0
 
 mat=mat_sparse(13)
-
+# print(mat.value)
 
 def TD_beta(mat=mat):
     init_V=np.zeros(mat.rownum,dtype=float)
     init_e=np.zeros(mat.rownum,dtype=float)
     R=1
-    beta=0.95
-    a=0.95
+    beta=0.85
+    a=0.99
     t=1
     def at(a,t):
         if a-0.001*t>0.001:
@@ -87,8 +87,8 @@ def TD_beta(mat=mat):
            return 0.001
     at_1=at(a,t)
     state=0
-    #依据当前状态，更新适度轨迹
-    def up_e(e=init_e,stat_now=0,R=1,beta=beta):
+    #依据当前状态，更新适度轨迹0增长轨迹，1替代轨迹
+    def up_e(e=init_e,stat_now=0,R=1,beta=beta,mode=0):
         rezult=[]
         e=list(e)
         i=0
@@ -96,7 +96,10 @@ def TD_beta(mat=mat):
           if i!=stat_now:
              rezult.append(R*beta*a)
           else:
-             rezult.append(R*beta*a+1.0)
+             if mode==0:
+                rezult.append(R*beta*a+1.0)
+             else:
+                rezult.append(1.0)
           i=i+1
         return np.array(rezult,dtype=float)
 
@@ -114,7 +117,8 @@ def TD_beta(mat=mat):
     def difference(stats_0=0):
         #计算时序差
         dt=0
-        next_state=0
+        next_stat=0 #在稀疏矩阵nnz中的位置
+        next_stat_col=stats_0 #在稀疏矩阵行中的位置
         if mat.xs_ps[stats_0]!=1:#不是吸收点
            show_p=np.random.rand()
            up=mat.csr_row[stats_0]
@@ -128,19 +132,19 @@ def TD_beta(mat=mat):
                   if show_p<e:
                      break
                   next_stat=next_stat+1
-              next_stat=mat.csr_col[next_stat]
+              next_stat_col=mat.csr_col[next_stat]
               # print("不是吸收点",next_stat)
-              dt=mat.value[next_stat]+R*init_V[next_stat]-init_V[stats_0]
+              dt=mat.value[next_stat]+R*init_V[next_stat_col]-init_V[stats_0]
            else:#只有一个跳转点
               next_stat=up
-              next_stat=mat.csr_col[next_stat]
-              # print("只有一个跳转点：",next_stat)
-              dt=mat.value[next_stat]+R*init_V[next_stat]-init_V[stats_0]
+              next_stat_col=mat.csr_col[next_stat]
+              dt=mat.value[next_stat]+R*init_V[next_stat_col]-init_V[stats_0]
+              # print("只有一个跳转点：",stats_0,next_stat,mat.value[next_stat],init_V[next_stat_col],init_V[stats_0])
         else:#当前点等于吸收点
            # print("吸收点：",stats_0)
            dt=mat.value[stats_0]+R*init_V[stats_0]-init_V[stats_0]
            next_stat=0#进入吸收点后返回初始点
-        return dt,next_stat
+        return dt,next_stat_col
 
     def up_all_difference():
         for i in range(mat.rownum):
@@ -155,7 +159,7 @@ def TD_beta(mat=mat):
         #计算差分
         [dt,next_state]=difference(state)
         #更新所有适度轨迹
-        init_e=up_e(e=init_e,stat_now=state,R=1,beta=beta)
+        init_e=up_e(e=init_e,stat_now=state,R=1,beta=beta,mode=1)
         # print("init_e1:",init_e)
         #更新所有状态值函数
         up_all_difference()
@@ -164,11 +168,11 @@ def TD_beta(mat=mat):
         state=next_state
         if is_xs(state):#是否吸收状态
            state=0
-        if t>10000:
+        if t>5000:
            print(init_V)
            break
     return init_V
-
+#
 TD_beta()
 
 
