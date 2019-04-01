@@ -142,7 +142,7 @@ def TD_beta(mat=mat):
               # print("只有一个跳转点：",stats_0,next_stat,mat.value[next_stat],init_V[next_stat_col],init_V[stats_0])
         else:#当前点等于吸收点
            # print("吸收点：",stats_0)
-           dt=mat.value[stats_0]+R*init_V[stats_0]-init_V[stats_0]
+           dt=0+R*init_V[stats_0]-init_V[stats_0]
            next_stat=0#进入吸收点后返回初始点
         return dt,next_stat_col
 
@@ -172,10 +172,73 @@ def TD_beta(mat=mat):
            print(init_V)
            break
     return init_V
-#
+
+def td_fun(mat=mat):
+    N=10
+    def norm(state=0,x=1,std=2):
+        return np.exp(-1.0*np.power(state-x,2)/(2.0*std))
+
+    def create_f_base(state=0,f_base_num=5):
+        rezult=[]
+        for i in range(f_base_num):
+            rezult.append(norm(state=state,x=i,std=1+i))
+        # print("rezult:=",rezult)
+        return np.array(rezult)
+
+    def transter(state_0=0,w=0,at=0.9):#科技函数和大小
+        base_f_now=create_f_base(state=state_0,f_base_num=N)
+        state_next=0
+        #计算时序差
+        wt=0
+        next_stat=0 #在稀疏矩阵nnz中的位置
+        next_stat_col=0 #在稀疏矩阵行中的位置
+        if mat.xs_ps[state_0]!=1:#不是吸收点
+            show_p=np.random.rand()
+            up=mat.csr_row[state_0]
+            down=mat.csr_row[state_0+1]
+            if up<down-1:#多余一个跳转点
+                p_list=mat.p2p[up:down]
+                next_stat=up
+                # print("不是吸收点",state_0,p_list,show_p,up,down)
+                for e in p_list:
+                    if show_p<e:
+                        break
+                    next_stat=next_stat+1
+                next_stat_col=mat.csr_col[next_stat]
+                # print("不是吸收点：",state_0,next_stat_col,mat.value[next_stat])
+                wt=w+at*(mat.value[next_stat]+R*np.dot(w,create_f_base(state=next_stat_col,f_base_num=N))-np.dot(w,base_f_now))*base_f_now
+            else:#只有一个跳转点
+                next_stat=up
+                next_stat_col=mat.csr_col[next_stat]
+                wt=w+at*(mat.value[next_stat]+R*np.dot(w,create_f_base(state=next_stat_col,f_base_num=N))-np.dot(w,base_f_now))*base_f_now
+                # print("只有一个跳转点：",mat.value[next_stat])
+                # print("一个点：",state_0,next_stat_col,mat.value[next_stat])
+        else:#当前点等于吸收点
+            wt=w+at*(0.0+R*np.dot(w,base_f_now)-np.dot(w,base_f_now))*base_f_now
+            # print("吸收点======：",state_0,0,at*(0.0+R*np.dot(w,base_f_now)-np.dot(w,base_f_now)))
+            next_stat_col=0#进入吸收点后返回初始点
+        return wt,next_stat_col
+
+    f_base_num=N
+    w=np.random.rand(f_base_num)
+    print(w)
+    t=500
+    at=100/(t+100)
+    R=1.0
+    next=0
+    while True:
+       if t>500000:
+          break
+       else:
+          [w,next]=transter(state_0=next,w=w,at=at)
+          t=t+1
+          if t%10==0:
+             at=100/(t+100)
+    for i in range(13):
+        print(12-i,np.dot(w,create_f_base(state=i,f_base_num=N)))
+
 TD_beta()
-
-
+td_fun()
 
 
 
