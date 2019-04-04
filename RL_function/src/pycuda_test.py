@@ -1,6 +1,6 @@
 import ctypes
 import numpy as np
-
+np.set_printoptions(suppress=True)
 
 
 def init_sparsemat(p2p_file="/lf_tool/matrix_cuda/coo",value_file="/lf_tool/matrix_cuda/coo2",rownum=13):
@@ -71,8 +71,8 @@ class mat_sparse:
             return 0
 
 mat=mat_sparse(13)
-# print(mat.value)
 
+#一、表格TD（n）学习法
 def TD_beta(mat=mat):
     init_V=np.zeros(mat.rownum,dtype=float)
     init_e=np.zeros(mat.rownum,dtype=float)
@@ -173,15 +173,18 @@ def TD_beta(mat=mat):
            break
     return init_V
 
+
+#二、线性值函数逼近求解法
 def td_fun(mat=mat):
-    N=10
+    N=100
     def norm(state=0,x=1,std=2):
-        return np.exp(-1.0*np.power(state-x,2)/(2.0*std))
+        return np.exp(-1.0*np.power(state-x*0.5,2)/(2.0*std)) #//高斯基
+        # return 1.0/(1.0+np.exp(np.power(state-x,2)/(std)))#//反转基
 
     def create_f_base(state=0,f_base_num=5):
         rezult=[]
         for i in range(f_base_num):
-            rezult.append(norm(state=state,x=i,std=1+i))
+            rezult.append(norm(state=state,x=i,std=2))
         # print("rezult:=",rezult)
         return np.array(rezult)
 
@@ -222,12 +225,12 @@ def td_fun(mat=mat):
     f_base_num=N
     w=np.random.rand(f_base_num)
     print(w)
-    t=500
+    t=1000
     at=100/(t+100)
     R=1.0
     next=0
     while True:
-       if t>500000:
+       if t>20000:
           break
        else:
           [w,next]=transter(state_0=next,w=w,at=at)
@@ -237,9 +240,109 @@ def td_fun(mat=mat):
     for i in range(13):
         print(12-i,np.dot(w,create_f_base(state=i,f_base_num=N)))
 
-TD_beta()
-td_fun()
+#。最小二成法更新
+def Least_Square():
+    N=20000
+    fun_num=5
+    so=ctypes.cdll.LoadLibrary('/root/git/RL_function/RL_function/Debug/libRL_function.so')
 
+    def norm(state=0,x=1,std=2):
+        return np.exp(-1.0*np.power(state-x*0.5,2)/(2.0*std)) #//高斯基
+        # return 1.0/(1.0+np.exp(np.power(state-x,2)/(std)))#//反转基
+
+    def create_f_base(state=0,f_base_num=fun_num):
+        rezult=[]
+        for i in range(f_base_num):
+            rezult.append(norm(state=state,x=i,std=2))
+        # print("rezult:=",rezult)
+        return np.array(rezult)
+
+    def ls_fuc(Aarray,Carray,m,n,nrch):
+        so.least_square_cublas(Aarray,Carray,m,n,nrch)
+        w=np.array(Carray)[0:n]
+        return w
+
+    def sample(mat=mat,num=N):#(xt,rt+1,xt+1)
+
+       def transter(state_0=0):#科技函数和大小
+            state_next=0
+            #计算时序差
+            next_stat=0 #在稀疏矩阵nnz中的位置
+            next_stat_col=0 #在稀疏矩阵行中的位置
+            reuzlt=[]
+            if mat.xs_ps[state_0]!=1:#不是吸收点
+                show_p=np.random.rand()
+                up=mat.csr_row[state_0]
+                down=mat.csr_row[state_0+1]
+                if up<down-1:#多余一个跳转点
+                    p_list=mat.p2p[up:down]
+                    next_stat=up
+                    # print("不是吸收点",state_0,p_list,show_p,up,down)
+                    for e in p_list:
+                        if show_p<e:
+                            break
+                        next_stat=next_stat+1
+                    next_stat_col=mat.csr_col[next_stat]
+                    # print("不是吸收点：",state_0,next_stat_col,mat.value[next_stat])
+                    rezult=[state_0,mat.value[next_stat],next_stat_col]
+                else:#只有一个跳转点
+                    next_stat=up
+                    next_stat_col=mat.csr_col[next_stat]
+                    rezult=[state_0,mat.value[next_stat],next_stat_col]
+                    # print("只有一个跳转点：",mat.value[next_stat])
+                    # print("一个点：",state_0,next_stat_col,mat.value[next_stat])
+            else:#当前点等于吸收点
+                rezult=[state_0,mat.value[next_stat],state_0]
+                # print("吸收点======：",state_0,0,at*(0.0+R*np.dot(w,base_f_now)-np.dot(w,base_f_now)))
+            return rezult
+
+       i=0
+       state_0=0
+       sample_list=[]
+       while i<num:
+           if mat.xs_ps[state_0]!=1:
+              [now,r,next]=transter(state_0)
+              sample_list.append([now,r,next])
+              i=i+1
+              state_0=next
+           else:
+              state_0=0 #回到原点继续开始
+              [now,r,next]=transter(state_0)
+              sample_list.append([now,r,next])
+              i=i+1
+              state_0=next
+       return sample_list
+
+    sam=sample(mat=mat,num=N)
+    Aarray=[]
+    Carray=[]
+    for  e  in  sam:
+         value_now=create_f_base(state=e[0],f_base_num=fun_num)
+         value_next=create_f_base(state=e[2],f_base_num=fun_num)
+         rward=e[1]
+         Aarray.append(np.array(value_now)-np.array(value_next))
+         Carray.append(rward)
+    Aarray=np.array(Aarray).T
+    Aarray=np.reshape(Aarray,N*fun_num)
+    Carray=np.array(Carray)
+    print(Aarray)
+    print(Carray)
+    Aarray_array=(ctypes.c_float*len(Aarray))(*Aarray)
+    Carray_array=(ctypes.c_float*len(Carray))(*Carray)
+    w=ls_fuc(Aarray_array,Carray_array,N,fun_num,1)
+    print(w)
+    for i in range(13):
+        print(i,np.dot(create_f_base(state=i,f_base_num=fun_num),w))
+
+Least_Square()
+# TD_beta()
+# td_fun()
+
+# x = np.array([[1, 50, 5, 200], [1, 50, 5, 400], [1, 50, 5, 600], [1, 50, 5, 800], [1, 50, 5, 1000], [1, 50, 10, 200], [1, 50, 10, 400], [1, 50, 10, 600], [1, 50, 10, 800], [1, 50, 10, 1000], [1, 60, 5, 200], [1, 60, 5, 400], [1, 60, 5, 600], [1, 60, 5, 800], [1, 60, 5, 1000], [1, 60, 10, 200], [1, 60, 10, 400], [1, 60, 10, 600], [1, 60, 10, 800], [1, 60, 10, 1000], [1, 70, 5, 200], [1, 70, 5, 400], [1, 70, 5, 600], [1, 70, 5, 800], [1, 70, 5, 1000], [1, 70, 10, 200], [1, 70, 10, 400]])
+# x=x.T
+# x=np.reshape(x,108)
+# y = np.array([7.434, 3.011, 1.437, 0.6728, 0.00036, 5.518, 2.556, 1.341, 0.6824, 0.0001, 18.22, 7.344, 4.066, 1.799, 1.218, 16.11, 9.448, 4.752, 2.245, 1.539, 18.14, 12.88, 7.29, 3.449, 2.533, 15.76, 16.24])
+#
 
 
 

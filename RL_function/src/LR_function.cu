@@ -66,7 +66,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
-
+#define IDX2C(i,j,ld) (((j)*(ld))+(i))
 /* MCtrix size */
 //#define N  (275)
 #define N (1024)
@@ -315,6 +315,69 @@ class RL_gpu{
 
 };
 
+
+
+//默认只有一组数据batchSize=1
+template<class T>
+void least_square(int batchSize,T* Aarray[],T*Carray[],int m,int n,int nrhs){
+	 cublasHandle_t handle_cublas;
+	 cublasCreate(&handle_cublas);
+	 int* info=(int *)malloc(batchSize*sizeof(info[0]));
+	 int* devInfoArray;
+	 checkCudaErrors(cudaMalloc(&devInfoArray, batchSize*sizeof(devInfoArray[0])));
+	 cout<<"if 0 all right ,eles wrong!"<<cublasSgelsBatched(handle_cublas,
+	 		 CUBLAS_OP_N,
+	 		 m,
+	 		 n,
+	 		 nrhs,
+	 		 Aarray,
+	 		 m,
+	         Carray,
+	         m,
+	         info,
+	         devInfoArray,
+	         batchSize)<<endl;
+	 cudaDeviceSynchronize();
+//	 cudaFree(info);
+//	 cudaFree(devInfoArray);
+}
+
+template<class T> //convert dd2hh
+T** dp2printf(T** devcie_m,int bithsize,int row_num,int col_num){
+//	cout<<"多bithsize矩阵，输出在device上的矩阵"<<endl;
+//	printf("bithsize:%d,row_num:%d,col_num:%d\n",bithsize,row_num,col_num);
+	int array_length=row_num*col_num;
+	T** host_m=(T**)malloc(bithsize*sizeof(*host_m));
+	T** host_print=(T**)malloc(bithsize*sizeof(*host_m));
+	for(int i=0;i<bithsize;i++){
+	    host_print[i]=(T* )malloc(array_length*sizeof(host_print[0][0]));
+	}
+	checkCudaErrors(cudaMemcpy(host_m,devcie_m,bithsize*sizeof(host_m[0]),cudaMemcpyDeviceToHost));
+	for(int i=0;i<bithsize;i++){
+		checkCudaErrors(cudaMemcpy(host_print[i],host_m[i],array_length*sizeof(host_m[0][0]),cudaMemcpyDeviceToHost));
+		cout<<"the ith_matrix:="<<i<<"******************************"<<endl;
+	    string output="[";
+	    for(int row_N=0;row_N<row_num;row_N++){
+	    	for (int col_N=0;col_N<col_num;col_N++) {
+	//    		cout<<"row:="<<i<<"|col:="<<j<<"|value:"<<rezult[IDX2C(i,j,m)]<<endl;
+	    		stringstream ss;
+	    		ss<<host_print[i][IDX2C(row_N,col_N,row_num)];
+	    		string temp;
+	    		ss>>temp;
+	            output+=temp;
+	            if(col_N!=(col_num-1))
+	               output+=",";
+	    		ss.clear();
+			}
+	    	if (row_N!=row_num-1)
+	    	   output+="\n";
+	    }
+	    output+=("]\n");
+		cout<<output<<endl;
+	}
+	return host_print;
+}
+
 //三、so文件函数
 extern "C" {
         void create_csr_mat(int* coocol,int* rowcol,float* coovp2p,float* coovalue,const char* file_path,const char* file_path_vlaue,int rownum,int colomnnum,int* abs_point_p){
@@ -350,6 +413,42 @@ extern "C" {
 					}
 
 			len[0]=index;
+		}
+
+		void least_square_cublas(float* Aarray,float* Carray,int m,int n,int nrhs){
+			//-----------------todd_start----------------------------Aarrau
+			//allocate T** hostpoint_hh_N on host an assign value
+			int size_N=1;
+			int pitch_N=m*n;
+
+			float **hostPointer_hd=(float **)malloc(size_N*sizeof(hostPointer_hd[0]));
+	        checkCudaErrors(cudaMalloc((void **)(&hostPointer_hd[0]),pitch_N*sizeof(hostPointer_hd[0][0])));
+			checkCudaErrors(cudaMemcpy(hostPointer_hd[0],Aarray,pitch_N*sizeof(hostPointer_hd[0][0]),cudaMemcpyHostToDevice));
+
+			float **devicePointer_dd;
+			checkCudaErrors(cudaMalloc((void **)(&devicePointer_dd),size_N*sizeof(devicePointer_dd[0])));
+			checkCudaErrors(cudaMemcpy(devicePointer_dd,hostPointer_hd,size_N*sizeof(devicePointer_dd[0]), cudaMemcpyHostToDevice));
+			//-----------------todd_end----------------------------------
+
+			//-----------------todd_start----------------------------Carray
+			//allocate T** hostpoint_hh_N on host an assign value
+			size_N=1;
+			pitch_N=m*nrhs;
+			float **hostPointer_hd_carray=(float **)malloc(size_N*sizeof(hostPointer_hd_carray[0]));
+	        checkCudaErrors(cudaMalloc((void **)(&hostPointer_hd_carray[0]),pitch_N*sizeof(hostPointer_hd_carray[0][0])));
+			checkCudaErrors(cudaMemcpy(hostPointer_hd_carray[0],Carray,pitch_N*sizeof(hostPointer_hd_carray[0][0]), cudaMemcpyHostToDevice));
+
+			float **devicePointer_dd_carray;
+			checkCudaErrors(cudaMalloc((void **)(&devicePointer_dd_carray),size_N*sizeof(devicePointer_dd_carray[0])));
+			checkCudaErrors(cudaMemcpy(devicePointer_dd_carray,hostPointer_hd_carray,size_N*sizeof(devicePointer_dd_carray[0]), cudaMemcpyHostToDevice));
+			//-----------------todd_end----------------------------------
+			least_square<float>(1,devicePointer_dd,devicePointer_dd_carray,m,n,nrhs);
+//			dp2printf<float>(devicePointer_dd_carray,1,4,1);
+
+			//返回
+			float **r=(float **)malloc(size_N*sizeof(r[0]));
+			checkCudaErrors(cudaMemcpy(r,devicePointer_dd_carray,size_N*sizeof(r[0]), cudaMemcpyDeviceToHost));
+			checkCudaErrors(cudaMemcpy(Carray,r[0],pitch_N*sizeof(r[0][0]), cudaMemcpyDeviceToHost));
 		}
    }
 }
