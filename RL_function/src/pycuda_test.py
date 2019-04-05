@@ -242,18 +242,18 @@ def td_fun(mat=mat):
 
 #。最小二成法更新
 def Least_Square():
-    N=20000
+    N=5000
     fun_num=5
     so=ctypes.cdll.LoadLibrary('/root/git/RL_function/RL_function/Debug/libRL_function.so')
 
     def norm(state=0,x=1,std=2):
-        return np.exp(-1.0*np.power(state-x*0.5,2)/(2.0*std)) #//高斯基
+        return np.exp(-1.0*np.power(state-x,2)/(2.0*std)) #//高斯基
         # return 1.0/(1.0+np.exp(np.power(state-x,2)/(std)))#//反转基
 
     def create_f_base(state=0,f_base_num=fun_num):
         rezult=[]
         for i in range(f_base_num):
-            rezult.append(norm(state=state,x=i,std=2))
+            rezult.append(norm(state=state,x=0,std=2*(i+1)))
         # print("rezult:=",rezult)
         return np.array(rezult)
 
@@ -283,17 +283,18 @@ def Least_Square():
                             break
                         next_stat=next_stat+1
                     next_stat_col=mat.csr_col[next_stat]
-                    # print("不是吸收点：",state_0,next_stat_col,mat.value[next_stat])
                     rezult=[state_0,mat.value[next_stat],next_stat_col]
+                    # print("不是吸收点：",rezult)
                 else:#只有一个跳转点
                     next_stat=up
                     next_stat_col=mat.csr_col[next_stat]
                     rezult=[state_0,mat.value[next_stat],next_stat_col]
-                    # print("只有一个跳转点：",mat.value[next_stat])
+                    # print("只有一个跳转点：",rezult)
                     # print("一个点：",state_0,next_stat_col,mat.value[next_stat])
             else:#当前点等于吸收点
-                rezult=[state_0,mat.value[next_stat],state_0]
-                # print("吸收点======：",state_0,0,at*(0.0+R*np.dot(w,base_f_now)-np.dot(w,base_f_now)))
+                rezult=[state_0,0,state_0]
+                # print("吸收点======：",rezult)
+                # print("----------------------------------------")
             return rezult
 
        i=0
@@ -306,34 +307,50 @@ def Least_Square():
               i=i+1
               state_0=next
            else:
-              state_0=0 #回到原点继续开始
               [now,r,next]=transter(state_0)
               sample_list.append([now,r,next])
               i=i+1
-              state_0=next
+              state_0=0#返回原点
        return sample_list
 
     sam=sample(mat=mat,num=N)
     Aarray=[]
     Carray=[]
-    for  e  in  sam:
+    R=1
+    w=np.zeros(fun_num)
+    t=1
+    # while True:
+    #     for  e  in  sam:
+    #          value_now=create_f_base(state=e[0],f_base_num=fun_num)
+    #          value_next=np.dot(create_f_base(state=e[2],f_base_num=fun_num),w)
+    #          rward=e[1]+value_next*R
+    #          Aarray.append(value_now)
+    #          Carray.append(rward)
+    #     Aarray=np.array(Aarray).T
+    #     Aarray=np.reshape(Aarray,N*fun_num)
+    #     Carray=np.array(Carray)
+    #     Aarray_array=(ctypes.c_float*len(Aarray))(*Aarray)
+    #     Carray_array=(ctypes.c_float*len(Carray))(*Carray)
+    #     w=ls_fuc(Aarray_array,Carray_array,N,fun_num,1)
+    #     Aarray=[]
+    #     Carray=[]
+    #一次迭代法
+    for e  in sam:
          value_now=create_f_base(state=e[0],f_base_num=fun_num)
          value_next=create_f_base(state=e[2],f_base_num=fun_num)
          rward=e[1]
-         Aarray.append(np.array(value_now)-np.array(value_next))
+         Aarray.append(np.array(value_now)-R*np.array(value_next))
          Carray.append(rward)
     Aarray=np.array(Aarray).T
     Aarray=np.reshape(Aarray,N*fun_num)
     Carray=np.array(Carray)
-    print(Aarray)
-    print(Carray)
     Aarray_array=(ctypes.c_float*len(Aarray))(*Aarray)
     Carray_array=(ctypes.c_float*len(Carray))(*Carray)
     w=ls_fuc(Aarray_array,Carray_array,N,fun_num,1)
     print(w)
     for i in range(13):
         print(i,np.dot(create_f_base(state=i,f_base_num=fun_num),w))
-
+#[-33.607815  41.806618 -49.396786  29.50096  -16.299845]
 Least_Square()
 # TD_beta()
 # td_fun()
