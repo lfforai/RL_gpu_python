@@ -242,8 +242,8 @@ def td_fun(mat=mat):
 
 #。最小二成法更新
 def Least_Square():
-    N=5000
-    fun_num=5
+    N=50000
+    fun_num=10
     so=ctypes.cdll.LoadLibrary('/root/git/RL_function/RL_function/Debug/libRL_function.so')
 
     def norm(state=0,x=1,std=2):
@@ -253,8 +253,8 @@ def Least_Square():
     def create_f_base(state=0,f_base_num=fun_num):
         rezult=[]
         for i in range(f_base_num):
-            rezult.append(norm(state=state,x=0,std=2*(i+1)))
-        # print("rezult:=",rezult)
+            rezult.append(norm(state=state,x=i,std=2))
+        # print("rezult:=",np.array(rezult))
         return np.array(rezult)
 
     def ls_fuc(Aarray,Carray,m,n,nrch):
@@ -350,6 +350,7 @@ def Least_Square():
     print(w)
     for i in range(13):
         print(i,np.dot(create_f_base(state=i,f_base_num=fun_num),w))
+
 #[-33.607815  41.806618 -49.396786  29.50096  -16.299845]
 Least_Square()
 # TD_beta()
